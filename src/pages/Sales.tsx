@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Product, Sale, SaleFormData } from '../types';
 import { getAllProducts, getAllSales, addSale, deleteSale } from '../services/db';
-import { getTodayDate } from '../utils/dateUtils';
+import { getTodayDate, formatDate } from '../utils/dateUtils';
 import { formatCurrency } from '../utils/formatUtils';
 import { useSettings } from '../hooks/useSettingsContext';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -13,8 +13,9 @@ const emptyForm: SaleFormData = { productId: 0, quantity: 1, salePrice: 0 };
 export default function Sales() {
   const { settings } = useSettings();
   const [products, setProducts] = useState<Product[]>([]);
-  const [todaySales, setTodaySales] = useState<Sale[]>([]);
+  const [dateSales, setDateSales] = useState<Sale[]>([]);
   const [form, setForm] = useState<SaleFormData>(emptyForm);
+  const [saleDate, setSaleDate] = useState<string>(getTodayDate());
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [saleMode, setSaleMode] = useState<SaleMode>('quantity');
   const [customerAmount, setCustomerAmount] = useState<number>(0);
@@ -24,14 +25,13 @@ export default function Sales() {
   const [deleteTarget, setDeleteTarget] = useState<Sale | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (dateFilter: string) => {
     const [prods, sales] = await Promise.all([getAllProducts(), getAllSales()]);
     setProducts(prods);
-    const today = getTodayDate();
-    setTodaySales(sales.filter((s) => s.date === today).reverse());
+    setDateSales(sales.filter((s) => s.date === dateFilter).reverse());
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(saleDate); }, [load, saleDate]);
 
   function handleProductChange(productId: number) {
     const p = products.find((pr) => pr.id === productId) ?? null;
@@ -84,14 +84,14 @@ export default function Sales() {
         totalCost,
         totalRevenue,
         totalProfit,
-        date: getTodayDate(),
+        date: saleDate,
         createdAt: new Date().toISOString(),
       });
       setSuccess(`✅ تم تسجيل بيع ${selectedProduct.name} بنجاح — الربح: ${formatCurrency(totalProfit, settings.currency)}`);
       setForm(emptyForm);
       setSelectedProduct(null);
       setCustomerAmount(0);
-      await load();
+      await load(saleDate);
       setTimeout(() => setSuccess(''), 5000);
     } catch {
       setError('حدث خطأ أثناء الحفظ');
@@ -105,15 +105,15 @@ export default function Sales() {
     setDeleting(true);
     try {
       await deleteSale(deleteTarget.id);
-      await load();
+      await load(saleDate);
       setDeleteTarget(null);
     } finally {
       setDeleting(false);
     }
   }
 
-  const todayRevenue = todaySales.reduce((a, s) => a + s.totalRevenue, 0);
-  const todayProfit = todaySales.reduce((a, s) => a + s.totalProfit, 0);
+  const todayRevenue = dateSales.reduce((a, s) => a + s.totalRevenue, 0);
+  const todayProfit = dateSales.reduce((a, s) => a + s.totalProfit, 0);
 
   return (
     <div className="fade-in">
@@ -130,6 +130,18 @@ export default function Sales() {
           <h2 className="card-title" style={{ marginBottom: 16 }}>➕ تسجيل عملية بيع</h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+            {/* تاريخ البيع */}
+            <div className="form-group">
+              <label className="form-label">تاريخ البيع</label>
+              <input
+                type="date"
+                className="form-control"
+                value={saleDate}
+                max={getTodayDate()}
+                onChange={(e) => setSaleDate(e.target.value || getTodayDate())}
+              />
+            </div>
 
             {/* اختيار المنتج */}
             <div className="form-group">
@@ -285,10 +297,10 @@ export default function Sales() {
         {/* Today's sales */}
         <div className="card">
           <div className="card-header">
-            <span className="card-title">📋 مبيعات اليوم ({todaySales.length})</span>
+            <span className="card-title">📋 مبيعات {formatDate(saleDate)} ({dateSales.length})</span>
           </div>
 
-          {todaySales.length > 0 && (
+          {dateSales.length > 0 && (
             <div className="summary-row" style={{ marginBottom: 16 }}>
               <div className="summary-item">
                 <span className="summary-item-label">إجمالي الإيرادات</span>
@@ -301,10 +313,10 @@ export default function Sales() {
             </div>
           )}
 
-          {todaySales.length === 0 ? (
+          {dateSales.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">🛒</div>
-              <div className="empty-state-text">لا توجد مبيعات اليوم بعد</div>
+              <div className="empty-state-text">لا توجد مبيعات مسجلة بهذا التاريخ بعد</div>
             </div>
           ) : (
             <div className="table-wrapper">
@@ -321,7 +333,7 @@ export default function Sales() {
                   </tr>
                 </thead>
                 <tbody>
-                  {todaySales.map((s) => (
+                  {dateSales.map((s) => (
                     <tr key={s.id}>
                       <td style={{ fontWeight: 600 }}>{s.productName}</td>
                       <td className="muted">{s.quantity.toFixed(3)}</td>
