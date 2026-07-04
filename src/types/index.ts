@@ -1,4 +1,4 @@
-export type Unit = 'حبة' | 'كيلو' | 'كرتون';
+export type Unit = 'حبة' | 'كيلو' | 'كرتون' | 'خيشة';
 
 export interface Product {
   id?: number;

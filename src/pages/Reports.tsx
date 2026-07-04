@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Sale, ReportData } from '../types';
 import { getAllSales } from '../services/db';
 import { getTodayDate, getWeekStartDate, getMonthStartDate, formatDate } from '../utils/dateUtils';
-import { formatCurrency } from '../utils/formatUtils';
+import { formatCurrency, formatQuantity } from '../utils/formatUtils';
 import { useSettings } from '../hooks/useSettingsContext';
 
 type ReportPeriod = 'daily' | 'weekly' | 'monthly' | 'custom';
@@ -65,6 +65,8 @@ export default function Reports() {
     productMap[s.productName].profit += s.totalProfit;
   });
   const productBreakdown = Object.values(productMap).sort((a, b) => b.profit - a.profit);
+  const topByQuantity = [...Object.values(productMap)].sort((a, b) => b.qty - a.qty).slice(0, 5);
+  const topByProfit = [...Object.values(productMap)].sort((a, b) => b.profit - a.profit).slice(0, 5);
 
   function handlePrint() {
     window.print();
@@ -144,7 +146,68 @@ export default function Reports() {
           </div>
         </div>
       ) : (
-        <div className="responsive-grid-2">
+        <>
+          <div className="responsive-grid-2" style={{ marginBottom: 16 }}>
+            {/* الأكثر مبيعًا */}
+            <div className="card">
+              <div className="card-header">
+                <span className="card-title">🔥 الأكثر مبيعًا (بالكمية)</span>
+              </div>
+              <div className="table-wrapper">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>المنتج</th>
+                      <th>الكمية المباعة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topByQuantity.map((p, i) => (
+                      <tr key={p.name}>
+                        <td className="muted">{i + 1}</td>
+                        <td style={{ fontWeight: 600 }}>{p.name}</td>
+                        <td>{formatQuantity(p.qty)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* الأكثر ربحًا */}
+            <div className="card">
+              <div className="card-header">
+                <span className="card-title">💰 الأكثر ربحًا</span>
+              </div>
+              <div className="table-wrapper">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>المنتج</th>
+                      <th>الربح</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topByProfit.map((p, i) => (
+                      <tr key={p.name}>
+                        <td className="muted">{i + 1}</td>
+                        <td style={{ fontWeight: 600 }}>{p.name}</td>
+                        <td>
+                          <span className={p.profit >= 0 ? 'profit-positive' : 'profit-negative'}>
+                            {formatCurrency(p.profit, settings.currency)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div className="responsive-grid-2">
           {/* Daily breakdown */}
           <div className="card">
             <div className="card-header">
@@ -197,7 +260,7 @@ export default function Reports() {
                   {productBreakdown.map((p) => (
                     <tr key={p.name}>
                       <td style={{ fontWeight: 600 }}>{p.name}</td>
-                      <td>{p.qty}</td>
+                      <td>{formatQuantity(p.qty)}</td>
                       <td>{formatCurrency(p.revenue, settings.currency)}</td>
                       <td>
                         <span className={p.profit >= 0 ? 'profit-positive' : 'profit-negative'}>
@@ -211,6 +274,7 @@ export default function Reports() {
             </div>
           </div>
         </div>
+        </>
       )}
 
       {/* Full Sales Detail */}
@@ -237,7 +301,7 @@ export default function Reports() {
                   <tr key={s.id}>
                     <td className="muted">{formatDate(s.date)}</td>
                     <td style={{ fontWeight: 600 }}>{s.productName}</td>
-                    <td>{s.quantity}</td>
+                    <td>{formatQuantity(s.quantity)}</td>
                     <td>{formatCurrency(s.salePrice, settings.currency)}</td>
                     <td className="muted">{formatCurrency(s.totalCost, settings.currency)}</td>
                     <td>{formatCurrency(s.totalRevenue, settings.currency)}</td>

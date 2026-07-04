@@ -7,7 +7,7 @@ import { useSettings } from '../hooks/useSettingsContext';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 
-const UNITS: Unit[] = ['حبة', 'كيلو', 'كرتون'];
+const UNITS: Unit[] = ['حبة', 'كيلو', 'كرتون', 'خيشة'];
 
 const emptyForm: ProductFormData = { name: '', unit: 'حبة', costPrice: 0, salePrice: 0 };
 
@@ -85,8 +85,8 @@ export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [filtered, setFiltered] = useState<Product[]>([]);
   const [search, setSearch] = useState('');
-  const [sortKey, setSortKey] = useState<keyof Product>('createdAt');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [sortKey, setSortKey] = useState<keyof Product>('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [modalOpen, setModalOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [form, setForm] = useState<ProductFormData>(emptyForm);
@@ -199,8 +199,8 @@ export default function Products() {
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value as keyof Product)}
           >
-            <option value="createdAt">ترتيب: التاريخ</option>
             <option value="name">ترتيب: الاسم</option>
+            <option value="createdAt">ترتيب: التاريخ</option>
             <option value="profit">ترتيب: الربح</option>
             <option value="salePrice">ترتيب: السعر</option>
           </select>

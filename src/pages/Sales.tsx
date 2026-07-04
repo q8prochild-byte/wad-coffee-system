@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Product, Sale, SaleFormData } from '../types';
-import { getAllProducts, getAllSales, addSale, deleteSale } from '../services/db';
+import { getAllProducts, getAllSales, addSale, updateSale, deleteSale } from '../services/db';
 import { getTodayDate, formatDate } from '../utils/dateUtils';
-import { formatCurrency } from '../utils/formatUtils';
+import { formatCurrency, formatQuantity } from '../utils/formatUtils';
 import { useSettings } from '../hooks/useSettingsContext';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DecimalInput from '../components/ui/DecimalInput';
@@ -25,6 +25,7 @@ export default function Sales() {
   const [success, setSuccess] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Sale | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
   const load = useCallback(async (dateFilter: string) => {
     const [prods, sales] = await Promise.all([getAllProducts(), getAllSales()]);
@@ -60,6 +61,25 @@ export default function Sales() {
   const totalProfit = totalRevenue - totalCost;
   const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
+  function openEditSale(sale: Sale) {
+    const p = products.find((pr) => pr.id === sale.productId) ?? null;
+    setSelectedProduct(p);
+    setSaleMode('quantity');
+    setCustomerAmount(0);
+    setForm({ productId: sale.productId, quantity: sale.quantity, salePrice: sale.salePrice });
+    setEditingSale(sale);
+    setError('');
+    setSuccess('');
+  }
+
+  function cancelEdit() {
+    setEditingSale(null);
+    setForm(emptyForm);
+    setSelectedProduct(null);
+    setCustomerAmount(0);
+    setError('');
+  }
+
   async function handleSave() {
     if (!form.productId) { setError('يرجى اختيار المنتج'); return; }
     if (!selectedProduct) { setError('المنتج غير موجود'); return; }
@@ -76,19 +96,33 @@ export default function Sales() {
     setError('');
     setSuccess('');
     try {
-      await addSale({
-        productId: selectedProduct.id!,
-        productName: selectedProduct.name,
-        quantity: computedQuantity,
-        costPrice: selectedProduct.costPrice,
-        salePrice: saleMode === 'amount' ? selectedProduct.salePrice : form.salePrice,
-        totalCost,
-        totalRevenue,
-        totalProfit,
-        date: saleDate,
-        createdAt: new Date().toISOString(),
-      });
-      setSuccess(`✅ تم تسجيل بيع ${selectedProduct.name} بنجاح — الربح: ${formatCurrency(totalProfit, settings.currency)}`);
+      if (editingSale) {
+        await updateSale({
+          ...editingSale,
+          quantity: computedQuantity,
+          salePrice: saleMode === 'amount' ? selectedProduct.salePrice : form.salePrice,
+          totalCost,
+          totalRevenue,
+          totalProfit,
+          date: saleDate,
+        });
+        setSuccess(`✅ تم تحديث عملية البيع بنجاح`);
+        setEditingSale(null);
+      } else {
+        await addSale({
+          productId: selectedProduct.id!,
+          productName: selectedProduct.name,
+          quantity: computedQuantity,
+          costPrice: selectedProduct.costPrice,
+          salePrice: saleMode === 'amount' ? selectedProduct.salePrice : form.salePrice,
+          totalCost,
+          totalRevenue,
+          totalProfit,
+          date: saleDate,
+          createdAt: new Date().toISOString(),
+        });
+        setSuccess(`✅ تم تسجيل بيع ${selectedProduct.name} بنجاح — الربح: ${formatCurrency(totalProfit, settings.currency)}`);
+      }
       setForm(emptyForm);
       setSelectedProduct(null);
       setCustomerAmount(0);
@@ -128,7 +162,9 @@ export default function Sales() {
       <div className="sales-layout">
         {/* Form */}
         <div className="card">
-          <h2 className="card-title" style={{ marginBottom: 16 }}>➕ تسجيل عملية بيع</h2>
+          <h2 className="card-title" style={{ marginBottom: 16 }}>
+            {editingSale ? '✏️ تعديل عملية بيع' : '➕ تسجيل عملية بيع'}
+          </h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
@@ -151,6 +187,7 @@ export default function Sales() {
                 className="form-control"
                 value={form.productId || ''}
                 onChange={(e) => handleProductChange(parseInt(e.target.value))}
+                disabled={!!editingSale}
               >
                 <option value="">-- اختر المنتج --</option>
                 {products.map((p) => (
@@ -160,6 +197,7 @@ export default function Sales() {
             </div>
 
             {/* طريقة البيع */}
+            {!editingSale && (
             <div className="form-group">
               <label className="form-label">طريقة البيع</label>
               <div className="tabs" style={{ marginBottom: 0 }}>
@@ -177,6 +215,7 @@ export default function Sales() {
                 </button>
               </div>
             </div>
+            )}
 
             {/* بالكمية */}
             {saleMode === 'quantity' && (
@@ -211,7 +250,7 @@ export default function Sales() {
                 />
                 {selectedProduct && customerAmount > 0 && (
                   <span style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 4 }}>
-                    الكمية المحسوبة: {computedQuantity.toFixed(3)} {selectedProduct.unit}
+                    الكمية المحسوبة: {formatQuantity(computedQuantity)} {selectedProduct.unit}
                     {' '}(السعر {formatCurrency(selectedProduct.salePrice, settings.currency)}/{selectedProduct.unit})
                   </span>
                 )}
@@ -235,7 +274,7 @@ export default function Sales() {
                 <div className="responsive-grid-2" style={{ gap: 10 }}>
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>الكمية</div>
-                    <div style={{ fontWeight: 700 }}>{computedQuantity.toFixed(3)} {selectedProduct.unit}</div>
+                    <div style={{ fontWeight: 700 }}>{formatQuantity(computedQuantity)} {selectedProduct.unit}</div>
                   </div>
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>التكلفة</div>
@@ -272,14 +311,26 @@ export default function Sales() {
             {error && <div className="alert alert-danger">⚠️ {error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
 
-            <button
-              className="btn btn-success"
-              onClick={handleSave}
-              disabled={saving}
-              style={{ width: '100%', padding: '12px', fontSize: 15 }}
-            >
-              {saving ? '⏳ جاري الحفظ...' : '💾 تسجيل البيع'}
-            </button>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                className="btn btn-success"
+                onClick={handleSave}
+                disabled={saving}
+                style={{ flex: 1, padding: '12px', fontSize: 15 }}
+              >
+                {saving ? '⏳ جاري الحفظ...' : editingSale ? '💾 تحديث العملية' : '💾 تسجيل البيع'}
+              </button>
+              {editingSale && (
+                <button
+                  className="btn btn-secondary"
+                  onClick={cancelEdit}
+                  disabled={saving}
+                  style={{ padding: '12px 18px' }}
+                >
+                  إلغاء
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -325,7 +376,7 @@ export default function Sales() {
                   {dateSales.map((s) => (
                     <tr key={s.id}>
                       <td style={{ fontWeight: 600 }}>{s.productName}</td>
-                      <td className="muted">{s.quantity.toFixed(3)}</td>
+                      <td className="muted">{formatQuantity(s.quantity)}</td>
                       <td style={{ fontWeight: 600, color: 'var(--color-accent)' }}>
                         {formatCurrency(s.totalRevenue, settings.currency)}
                       </td>
@@ -339,7 +390,10 @@ export default function Sales() {
                         {new Date(s.createdAt).toLocaleTimeString('ar-KW', { hour: '2-digit', minute: '2-digit' })}
                       </td>
                       <td>
-                        <button className="btn btn-danger btn-sm btn-icon" onClick={() => setDeleteTarget(s)}>🗑️</button>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button className="btn btn-secondary btn-sm btn-icon" onClick={() => openEditSale(s)} title="تعديل">✏️</button>
+                          <button className="btn btn-danger btn-sm btn-icon" onClick={() => setDeleteTarget(s)} title="حذف">🗑️</button>
+                        </div>
                       </td>
                     </tr>
                   ))}

@@ -164,6 +164,21 @@ export async function getSalesByDateRange(startDate: string, endDate: string): P
   return (data as SaleRow[]).map(saleFromRow);
 }
 
+export async function updateSale(sale: Sale): Promise<void> {
+  const { error } = await supabase
+    .from('sales')
+    .update({
+      quantity: sale.quantity,
+      sale_price: sale.salePrice,
+      total_cost: sale.totalCost,
+      total_revenue: sale.totalRevenue,
+      total_profit: sale.totalProfit,
+      date: sale.date,
+    })
+    .eq('id', sale.id);
+  if (error) throw error;
+}
+
 export async function deleteSale(id: number): Promise<void> {
   const { error } = await supabase.from('sales').delete().eq('id', id);
   if (error) throw error;
