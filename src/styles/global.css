@@ -703,6 +703,156 @@ body {
   .card { box-shadow: none; border: 1px solid #ddd; }
 }
 
+/* ============================================
+   التصميم المتجاوب (الجوال والأجهزة اللوحية)
+   ============================================ */
+
+.responsive-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.sales-layout {
+  display: grid;
+  grid-template-columns: 440px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* زر فتح القائمة - مخفي على الشاشات الكبيرة */
+.menu-toggle-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+}
+
+.menu-toggle-btn:hover {
+  background: var(--color-primary-ultra-light);
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+/* أجهزة لوحية ومتوسطة */
+@media (max-width: 1024px) {
+  .sales-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* الجوالات */
+@media (max-width: 768px) {
+  html {
+    font-size: 13px;
+  }
+
+  .menu-toggle-btn {
+    display: inline-block;
+  }
+
+  /* القائمة الجانبية تتحول لقائمة منسدلة عن طريق الانزلاق */
+  .sidebar {
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    width: 260px;
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 90;
+  }
+
+  .main-wrapper {
+    margin-right: 0;
+  }
+
+  .header {
+    padding: 0 14px;
+  }
+
+  .header-title {
+    font-size: 15px;
+  }
+
+  .header-date {
+    display: none;
+  }
+
+  .logout-label {
+    display: none;
+  }
+
+  .page-content {
+    padding: 14px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .responsive-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid,
+  .form-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
+  .summary-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .table thead th,
+  .table tbody td {
+    padding: 8px 10px;
+    font-size: 12.5px;
+  }
+
+  .search-bar {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .search-bar select {
+    width: 100% !important;
+  }
+}
+
+/* شاشات صغيرة جدًا */
+@media (max-width: 380px) {
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

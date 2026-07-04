@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { SettingsProvider } from './hooks/useSettingsContext';
@@ -12,6 +13,7 @@ import SettingsPage from './pages/Settings';
 
 function AppShell() {
   const { session, loading } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (loading) {
     return (
@@ -29,9 +31,10 @@ function AppShell() {
     <SettingsProvider>
       <BrowserRouter>
         <div className="app-container">
-          <Sidebar />
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
           <div className="main-wrapper">
-            <Header />
+            <Header onMenuClick={() => setSidebarOpen((v) => !v)} />
             <main className="page-content">
               <Routes>
                 <Route path="/" element={<Dashboard />} />

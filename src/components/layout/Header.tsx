@@ -1,7 +1,11 @@
 import { useSettings } from '../../hooks/useSettingsContext';
 import { useAuth } from '../../hooks/useAuth';
 
-export default function Header() {
+interface HeaderProps {
+  onMenuClick: () => void;
+}
+
+export default function Header({ onMenuClick }: HeaderProps) {
   const { settings } = useSettings();
   const { signOut } = useAuth();
   const today = new Date().toLocaleDateString('ar-KW', {
@@ -13,14 +17,19 @@ export default function Header() {
 
   return (
     <header className="header">
-      <div className="header-title">☕ {settings.shopName}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button className="menu-toggle-btn" onClick={onMenuClick} aria-label="القائمة">
+          ☰
+        </button>
+        <div className="header-title">☕ {settings.shopName}</div>
+      </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <div className="header-date">
           <span>📅</span>
           <span>{today}</span>
         </div>
         <button className="btn btn-secondary btn-sm" onClick={signOut}>
-          🚪 تسجيل الخروج
+          🚪 <span className="logout-label">تسجيل الخروج</span>
         </button>
       </div>
     </header>

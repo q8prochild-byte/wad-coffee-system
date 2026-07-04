@@ -5,6 +5,7 @@ import { getTodayDate, formatDate } from '../utils/dateUtils';
 import { formatCurrency } from '../utils/formatUtils';
 import { useSettings } from '../hooks/useSettingsContext';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import DecimalInput from '../components/ui/DecimalInput';
 
 type SaleMode = 'quantity' | 'amount';
 
@@ -124,7 +125,7 @@ export default function Sales() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '440px 1fr', gap: 20, alignItems: 'start' }}>
+      <div className="sales-layout">
         {/* Form */}
         <div className="card">
           <h2 className="card-title" style={{ marginBottom: 16 }}>➕ تسجيل عملية بيع</h2>
@@ -182,24 +183,16 @@ export default function Sales() {
               <div className="form-grid">
                 <div className="form-group">
                   <label className="form-label">الكمية</label>
-                  <input
-                    type="number"
-                    min="0.001"
-                    step="0.001"
-                    className="form-control"
-                    value={form.quantity || ''}
-                    onChange={(e) => setForm((f) => ({ ...f, quantity: parseFloat(e.target.value) || 0 }))}
+                  <DecimalInput
+                    value={form.quantity}
+                    onChange={(v) => setForm((f) => ({ ...f, quantity: v }))}
                   />
                 </div>
                 <div className="form-group">
                   <label className="form-label">سعر البيع ({settings.currency})</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.001"
-                    className="form-control"
-                    value={form.salePrice || ''}
-                    onChange={(e) => setForm((f) => ({ ...f, salePrice: parseFloat(e.target.value) || 0 }))}
+                  <DecimalInput
+                    value={form.salePrice}
+                    onChange={(v) => setForm((f) => ({ ...f, salePrice: v }))}
                   />
                 </div>
               </div>
@@ -209,15 +202,11 @@ export default function Sales() {
             {saleMode === 'amount' && (
               <div className="form-group">
                 <label className="form-label">المبلغ الذي دفعه الزبون ({settings.currency})</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.001"
-                  className="form-control"
+                <DecimalInput
+                  value={customerAmount}
+                  onChange={setCustomerAmount}
                   style={{ fontSize: 18, fontWeight: 700, padding: '12px 14px' }}
                   placeholder="مثال: 1.000"
-                  value={customerAmount || ''}
-                  onChange={(e) => setCustomerAmount(parseFloat(e.target.value) || 0)}
                   autoFocus
                 />
                 {selectedProduct && customerAmount > 0 && (
@@ -243,7 +232,7 @@ export default function Sales() {
                 <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-muted)', marginBottom: 2 }}>
                   📊 ملخص العملية
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div className="responsive-grid-2" style={{ gap: 10 }}>
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>الكمية</div>
                     <div style={{ fontWeight: 700 }}>{computedQuantity.toFixed(3)} {selectedProduct.unit}</div>

@@ -11,6 +11,8 @@ const UNITS: Unit[] = ['حبة', 'كيلو', 'كرتون'];
 
 const emptyForm: ProductFormData = { name: '', unit: 'حبة', costPrice: 0, salePrice: 0 };
 
+import DecimalInput from '../components/ui/DecimalInput';
+
 function ProductForm({
   value,
   onChange,
@@ -47,24 +49,16 @@ function ProductForm({
       <div className="form-grid">
         <div className="form-group">
           <label className="form-label">تكلفة الشراء ({currency})</label>
-          <input
-            type="number"
-            min="0"
-            step="0.001"
-            className="form-control"
-            value={value.costPrice || ''}
-            onChange={(e) => onChange({ ...value, costPrice: parseFloat(e.target.value) || 0 })}
+          <DecimalInput
+            value={value.costPrice}
+            onChange={(v) => onChange({ ...value, costPrice: v })}
           />
         </div>
         <div className="form-group">
           <label className="form-label">سعر البيع ({currency})</label>
-          <input
-            type="number"
-            min="0"
-            step="0.001"
-            className="form-control"
-            value={value.salePrice || ''}
-            onChange={(e) => onChange({ ...value, salePrice: parseFloat(e.target.value) || 0 })}
+          <DecimalInput
+            value={value.salePrice}
+            onChange={(v) => onChange({ ...value, salePrice: v })}
           />
         </div>
       </div>

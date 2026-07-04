@@ -144,7 +144,7 @@ export default function Reports() {
           </div>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="responsive-grid-2">
           {/* Daily breakdown */}
           <div className="card">
             <div className="card-header">

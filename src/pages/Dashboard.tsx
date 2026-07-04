@@ -126,7 +126,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+      <div className="responsive-grid-2" style={{ marginBottom: 16 }}>
         <div className="card">
           <div className="card-header">
             <span className="card-title">📦 إجمالي المنتجات</span>

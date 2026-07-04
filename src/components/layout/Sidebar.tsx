@@ -15,11 +15,16 @@ const navItems: NavItem[] = [
   { path: '/settings', icon: '⚙️', label: 'الإعدادات' },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { settings } = useSettings();
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${isOpen ? ' sidebar-open' : ''}`}>
       <div className="sidebar-logo">
         <span className="sidebar-logo-icon">☕</span>
         <span className="sidebar-logo-text">{settings.shopName}</span>
@@ -31,6 +36,7 @@ export default function Sidebar() {
             to={item.path}
             end={item.path === '/'}
             className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
+            onClick={onClose}
           >
             <span className="sidebar-link-icon">{item.icon}</span>
             {item.label}
