@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider, useAuth } from './hooks/useAuth';
 import { SettingsProvider } from './hooks/useSettingsContext';
+import Login from './pages/Login';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import Dashboard from './pages/Dashboard';
@@ -8,7 +10,21 @@ import Sales from './pages/Sales';
 import Reports from './pages/Reports';
 import SettingsPage from './pages/Settings';
 
-export default function App() {
+function AppShell() {
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div>⏳ جاري التحميل...</div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <Login />;
+  }
+
   return (
     <SettingsProvider>
       <BrowserRouter>
@@ -29,5 +45,13 @@ export default function App() {
         </div>
       </BrowserRouter>
     </SettingsProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppShell />
+    </AuthProvider>
   );
 }
